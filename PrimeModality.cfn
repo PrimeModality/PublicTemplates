@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Prime Modality Assume Role for accessing the specific AWS resources.
+Resources:
+  # IAM role which Prime Modality will be Assuming (STS:AssumeRole)
+  PrimeModalityAssumeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - "arn:aws:iam::650238966022:role/prime_modality_assume"
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref ExternalId
+      Policies:
+        - PolicyName: Ec2ReadAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "ec2:DescribeInstances"
+                  - "ec2:DescribeSnapshots"
+                Resource: '*'
+        - PolicyName: Ec2CreateAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "ec2:CreateSnapshots"
+                  - "ec2:CreateSnapshot"
+                  - "ec2:CreateTags"
+                Resource: '*'
+        - PolicyName: Ec2DeleteAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "ec2:DeleteSnapshot"
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    'aws:ResourceTag/Name': "PrimeModalityScanSnapshot"
+        - PolicyName: Ec2ModifyAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "ec2:ModifySnapshotAttribute"
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    'aws:ResourceTag/Name': "PrimeModalityScanSnapshot"
+Parameters:
+  # Provide the external id given to you by Prime Modality
+  ExternalId:
+    Description: The external id given to you by Prime Modality
+    Type: String
+Outputs:
+  RoleARN:
+    Description: The ARN of created role
+    Value: !GetAtt PrimeModalityAssumeRole.Arn
